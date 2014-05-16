@@ -8,6 +8,8 @@ Chef-DK入門
 | Chef Development Kit  |0.1.0  |             |
 | vagrant        |1.6.0         |             |
 
+[入門CHEF SOLO](https://github.com/k2works/chef_solo_introduction)のvagrant環境を設定して使う
+
 # 構成
 + [Chef](#1)
 + [Berkshelf](#2)
@@ -17,9 +19,213 @@ Chef-DK入門
 
 # 詳細
 ## <a name="1">Chef</a>
-[入門CHEF SOLO](https://github.com/k2works/chef_solo_introduction)
+### chefコマンド
++ ```chef generate app``` Creates an "application" layout that supports multiple cookbooks. This is a somewhat experimental compromise between the one-repo-per-cookbook and monolithic-chef-repo styles of cookbook management.
++ ```chef generate cookbook``` Creates a single cookbook.
++ ```chef generate recipe``` Creates a new recipe file in an existing cookbook.
++ ```chef generate attribute``` Creates a new attributes file in an existing cookbook.
++ ```chef generate template``` Creates a new template file in an existing cookbook. Use the -s SOURCE option to copy a source file's content to populate the template.
++ ```chef generate file``` Creates a new cookbook file in an existing cookbook. Supports the -s SOURCE option similar to template.
++ ```chef generate lwrp``` Creates a new LWRP resource and provider in an existing cookbook.
 
+### chefアプリケーション作成
+```bash
+$ chef generate app myapp
+Compiling Cookbooks...
+Recipe: code_generator::app
+  * directory[/Users/k2works/projects/github/Chef-DK_introduction/myapp] action create
+    - create new directory /Users/k2works/projects/github/Chef-DK_introduction/myapp
+
+  * template[/Users/k2works/projects/github/Chef-DK_introduction/myapp/.kitchen.yml] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/.kitchen.yml
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/.kitchen.yml from none to 325674
+        (diff output suppressed by config)
+
+  * template[/Users/k2works/projects/github/Chef-DK_introduction/myapp/README.md] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/README.md
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/README.md from none to 6700ec
+        (diff output suppressed by config)
+
+  * directory[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks] action create
+    - create new directory /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks
+
+  * directory[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp] action create
+    - create new directory /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp
+
+  * template[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/metadata.rb] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/metadata.rb
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/metadata.rb from none to f054c6
+        (diff output suppressed by config)
+
+  * cookbook_file[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/chefignore] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/chefignore
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/chefignore from none to f2a74d
+        (diff output suppressed by config)
+
+  * cookbook_file[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/Berksfile] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/Berksfile
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/Berksfile from none to 303039
+        (diff output suppressed by config)
+
+  * directory[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/recipes] action create
+    - create new directory /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/recipes
+
+  * template[/Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/recipes/default.rb] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/recipes/default.rb
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/myapp/recipes/default.rb from none to d6c07b
+        (diff output suppressed by config)
+
+  * execute[initialize-git] action run
+    - execute git init .
+
+  * cookbook_file[/Users/k2works/projects/github/Chef-DK_introduction/myapp/.gitignore] action create
+    - create new file /Users/k2works/projects/github/Chef-DK_introduction/myapp/.gitignore
+    - update content in file /Users/k2works/projects/github/Chef-DK_introduction/myapp/.gitignore from none to 05eef0
+        (diff output suppressed by config)
+```
 ## <a name="2">Berkshelf</a>
+### コマンド
++ berks init
++ berks cookbook
++ berks install
++ berks help
++ berks package
++ berks vendor
+
+### クックブック作成
+```bash
+$ cd myapp/cookbooks/
+$ mv myapp mycookbook
+$ cd mycookbook
+$ berks init .
+   identical  Berksfile
+      create  Thorfile
+    conflict  chefignore
+Overwrite /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/chefignore? (enter "h" for help) [Ynaqdh] Y
+       force  chefignore
+      create  .gitignore
+         run  git init from "."
+      create  Gemfile
+      create  .kitchen.yml
+      append  Thorfile
+      create  test/integration/default
+      append  .gitignore
+      append  .gitignore
+      append  Gemfile
+      append  Gemfile
+You must run `bundle install' to fetch any new gems.
+      create  Vagrantfile
+Successfully initialized
+```
+_Berksfile_編集
+```ruby
+source "https://api.berkshelf.com"
+
+metadata
+
+cookbook "mysql"
+cookbook "nginx", "~> 2.6"
+```
+_metadate.rb_編集
+```ruby
+name             'mycookbook'
+maintainer       ''
+maintainer_email ''
+license          ''
+description      'Installs/Configures '
+long_description 'Installs/Configures '
+version          '0.1.0'
+```
+実行
+```bash
+$ berks vendor
+Resolving cookbook dependencies...
+Fetching 'mycookbook' from source at .
+Fetching cookbook index from https://api.berkshelf.com...
+Using apt (2.4.0)
+Using bluepill (2.3.1)
+Using build-essential (2.0.2)
+Using mycookbook (0.1.0) from source at .
+Using mysql (5.2.10)
+Using nginx (2.7.0)
+Using ohai (2.0.0)
+Using rsyslog (1.12.2)
+Using runit (1.5.10)
+Using yum (3.2.0)
+Using yum-epel (0.3.6)
+Vendoring apt (2.4.0) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/apt
+Vendoring bluepill (2.3.1) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/bluepill
+Vendoring build-essential (2.0.2) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/build-essential
+Vendoring mycookbook (0.1.0) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/mycookbook
+Vendoring mysql (5.2.10) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/mysql
+Vendoring nginx (2.7.0) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/nginx
+Vendoring ohai (2.0.0) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/ohai
+Vendoring rsyslog (1.12.2) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/rsyslog
+Vendoring runit (1.5.10) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/runit
+Vendoring yum (3.2.0) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/yum
+Vendoring yum-epel (0.3.6) to /Users/k2works/projects/github/Chef-DK_introduction/myapp/cookbooks/mycookbook/berks-cookbooks/yum-epel
+```
+_Vagrantfile_編集
+```ruby
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.require_version ">= 1.5.0"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  end
+  config.vm.provision :shell, :path => "bootstrap.sh"
+
+  config.vm.hostname = "mycookbook-berkshelf"
+  config.omnibus.chef_version = :latest
+  config.vm.box = "opscode_ubuntu-12.04_provisionerless"
+  config.vm.box_url = "https://opscode-vm-bento.s3.amazonaws.com/vagrant/opscode_ubuntu-12.04_provisionerless.box"
+　config.vm.network "private_network", ip: "192.168.50.12"
+
+  config.berkshelf.enabled = true
+
+  config.vm.provision :chef_solo do |chef|
+    chef.json = {
+      mysql: {
+        server_root_password: 'rootpass',
+        server_debian_password: 'debpass',
+        server_repl_password: 'replpass'
+      }
+    }
+
+    chef.run_list = [
+        "recipe[mycookbook::default]",
+        "nginx",
+        "mysql::client",
+        "mysql::server"
+    ]
+  end
+end
+```
+_bootstrap.sh_追加
+```bash
+#!/usr/bin/env bash
+echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
+apt-get update
+```
+vagrant実行
+```bash
+$ vagrant plugin install vagrant-berkshelf --plugin-version 2.0.1
+$ vagrant up
+Bringing machine 'default' up with 'virtualbox' provider...
+==> default: Importing base box 'opscode_ubuntu-12.04_provisionerless'...
+==> default: Matching MAC address for NAT networking...
+・・・
+==> default: [2014-05-16T10:01:53+00:00] INFO: Chef Run complete in 74.600774345 seconds
+==> default: [2014-05-16T10:01:53+00:00] INFO: Running report handlers
+==> default: [2014-05-16T10:01:53+00:00] INFO: Report handlers complete
+```
+
 ## <a name="3">Test Kitchen</a>
 ## <a name="4>ChefSpec</a>
 ## <a name="5>Foodcritic</a>
