@@ -1,6 +1,8 @@
 ---
 driver:
   name: vagrant
+  customize:
+    natdnshostresolver1: "on"
 
 provisioner:
   name: chef_solo
@@ -12,5 +14,8 @@ platforms:
 suites:
   - name: default
     run_list:
-      - recipe[::default]
+      - recipe[mycookbook::default]
+      - nginx
+      - mysql::client
+      - mysql::server
     attributes:

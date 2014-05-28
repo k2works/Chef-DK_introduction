@@ -1,1 +1,3 @@
 myapp/cookbooks/mycookbook/.vagrant/*
+myapp/cookbooks/mycookbook/.kitchen/*
+.kitchen

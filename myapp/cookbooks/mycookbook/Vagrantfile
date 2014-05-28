@@ -10,7 +10,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
   end
-  config.vm.provision :shell, :path => "bootstrap.sh"
 
   config.vm.hostname = "mycookbook-berkshelf"
   config.omnibus.chef_version = :latest
@@ -31,6 +30,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     chef.run_list = [
         "recipe[mycookbook::default]",
+        "apt",
+        "yum",
         "nginx",
         "mysql::client",
         "mysql::server"
