@@ -120,12 +120,12 @@ Recipe: code_generator::app
 ```
 ## <a name="2">Berkshelf</a>
 ### コマンド
-+ berks init
-+ berks cookbook
-+ berks install
-+ berks help
-+ berks package
-+ berks vendor
++ berks init:既に存在するクックブックにBerksfileを生成する。
++ berks cookbook:新しいクックブックを生成する。
++ berks install:指定されたBerksfileと依存関係のクックブックをインストールする
++ berks help:ヘルプ
++ berks package:必要なクックブックを含んだ単一アーカイブを作成する。
++ berks vendor:クックブックをローカルにインストールする
 
 ### クックブック作成
 ```bash
@@ -152,7 +152,8 @@ You must run `bundle install' to fetch any new gems.
       create  Vagrantfile
 Successfully initialized
 ```
-_Berksfile_編集
+依存関係はBerksfileを経由して管理されます。BerkfileはBundlerのGemfileのようなものです。  
+_Berksfile_  
 ```ruby
 source "https://api.berkshelf.com"
 
@@ -161,7 +162,8 @@ metadata
 cookbook "mysql"
 cookbook "nginx", "~> 2.6"
 ```
-_metadate.rb_編集
+metadataキーワードはBundlerのGemfile内のgemspecのようなものです。  
+_metadate.rb_  
 ```ruby
 name             'mycookbook'
 maintainer       ''
@@ -262,8 +264,8 @@ Bringing machine 'default' up with 'virtualbox' provider...
 ```
 
 ## <a name="3">Test Kitchen</a>
-## <a name="4>ChefSpec</a>
-## <a name="5>Foodcritic</a>
+## <a name="4">ChefSpec</a>
+## <a name="5">Foodcritic</a>
 
 # 参照
 + [Chef](http://www.getchef.com)
