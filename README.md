@@ -1,6 +1,8 @@
 Chef-DK入門
 ====================
 # 目的
+[Chef開発キット](https://github.com/opscode/chef-dk)の解説
+
 # 前提
 | ソフトウェア   | バージョン   | 備考        |
 |:---------------|:-------------|:------------|
@@ -11,22 +13,55 @@ Chef-DK入門
 [入門CHEF SOLO](https://github.com/k2works/chef_solo_introduction)のvagrant環境を設定して使う
 
 # 構成
-+ [Chef](#1)
++ [Chef Development Kit](#1)
 + [Berkshelf](#2)
 + [Test Kitchen](#3)
 + [ChefSpec](#4)
 + [Foodcritic](#5)
 
 # 詳細
-## <a name="1">Chef</a>
+## <a name="1">Chef Development Kit</a>
+### インストール
+[ここ](http://www.getchef.com/downloads/chef-dk/)からダウンロードする。  
+パッケージのインストールができたならシェフクライアントスイートがシステムのbinディレクトリにシンボルリンクが貼られて使えるようになります。
+
 ### chefコマンド
-+ ```chef generate app``` Creates an "application" layout that supports multiple cookbooks. This is a somewhat experimental compromise between the one-repo-per-cookbook and monolithic-chef-repo styles of cookbook management.
-+ ```chef generate cookbook``` Creates a single cookbook.
-+ ```chef generate recipe``` Creates a new recipe file in an existing cookbook.
-+ ```chef generate attribute``` Creates a new attributes file in an existing cookbook.
-+ ```chef generate template``` Creates a new template file in an existing cookbook. Use the -s SOURCE option to copy a source file's content to populate the template.
-+ ```chef generate file``` Creates a new cookbook file in an existing cookbook. Supports the -s SOURCE option similar to template.
-+ ```chef generate lwrp``` Creates a new LWRP resource and provider in an existing cookbook.
+我々のゴールはchefを素早いイテレーションとテストを可能にするBerkshelfの考えを組み込んだワークフローツールにする、そして簡単で信頼性が高く再利用可能なインフラ用自動化コードを生成する方法を提供することです。
+
+#### ```chef generate```
+ジェネレートサブコマンドはChefコードレイアウトのスケルトンを生成します。なのでテンプレートをコピーする退屈な作業をスキップしてインフラ自動化を迅速にやり遂げます。他のジェネレーターと違ってクックブックを作るときに最小限必要なファイルだけ生成します。なので不必要な過剰性を除いたタスクに集中できます。
+
+以下のジェネレーターが組み込まれています。
+
++ ```chef generate app``` 複数のクックブックをサポートするアプリケーションレイアウトを生成する。これはひとつのレポジトリにひとつのクックブックと単一なシェフレポジトリのクックブック管理スタイルとの実験的折衷案です。
++ ```chef generate cookbook``` 単一のクックブックを作る。
++ ```chef generate recipe``` すでに存在するクックブックに新しいレシピファイルを作る。
++ ```chef generate attribute``` すでに存在するクックブックに新しいアトリビュートファイルを作る。
++ ```chef generate template``` すでに存在するクックブックに新しいテンプレートファイルを作る。-s SOURCEオプションを使うとソースファイルをコピーしてテンプレートを追加します。
++ ```chef generate file``` 既に存在するクックブックに新しいクックブックを作る。
++ ```chef generate lwrp``` 既に存在するクックブックに新しいLWRPリソースとプロバイダを作る。
+
+#### ```chef gem```
+chef gemはChefDKパッケージ用に組み込んだRubyのパッケージ管理のラッパーコマンドです。
+
+Gemsはホームディレクトリの.chefdkディレクトリにインストールされます。
+
+#### ```chef verify```
+chef verifyは組み込まれたアプリケーションのテストを実行します。デフォルトでは組み込まれたアプリケーションが正しくインストールされてベーシックコマンドが動作するかを確かめるお手軽”スモークテスト”を実行します。
+
+警告：受け入れテストは十分な権限でファイルシステムにアクセスしユーザー・グループを作成するHTTPサーバーを起動するような危険な行為です。テストはマシンの設定に敏感です。もしこれらを実行させるなら専用の隔離されてたホストで実行することを推奨します。
+
+#### ```chef exec```
+
+chef exec <command>は環境変数のPATHとruby環境変数(GEM_HOME,GEM_PATH,etc)で指定された任意のシェルコマンドを実行します。
+
+#### ChefDKを主要な開発環境に使う
+
+デフォルトではChefDKは既に存在する他のRuby開発環境から分離していくつかのアプリケーションをPATHに追加してパッケージングします。他のRuby環境を継続して使えます。ChefDKで提供するアプリケーションをPATHの最初に配置するだけです。
+
+もしChefDKを主要なRuby/Chef開発環境にする場合はいくつかの変更が必要です。
+
+_~/.chefdk/gem/ruby/2.1.0/bin_をPAHTに追加。これでchef gem経由でインストールしたコマンドラインアプリケーションを実行できるようになる。
 
 ### chefアプリケーション作成
 ```bash
