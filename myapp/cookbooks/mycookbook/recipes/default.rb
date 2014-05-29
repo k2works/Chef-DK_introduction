@@ -20,3 +20,7 @@ execute "apt-get-update-periodic" do
     File.mtime('/var/lib/apt/periodic/update-success-stamp') < Time.now - 86400
   end
 end
+
+package "git"
+
+log "Well, that was too easy"

@@ -264,6 +264,101 @@ Bringing machine 'default' up with 'virtualbox' provider...
 ```
 
 ## <a name="3">Test Kitchen</a>
+### KitchenCI設定
+デフォルトではバーチャルマシンの名前解決が上手くいかないので_default.rb_を編集して名前解決とapt-get updateを起動時に実行できるようにする。  
+_myapp/cookbooks/mycookbook/recipes/default.rb_
+```ruby
+bash 'bootstrap' do
+  code <<-EOC
+    echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
+  EOC
+end
+
+execute "apt-get-update-periodic" do
+  command "apt-get update"
+  ignore_failure true
+  only_if do
+    File.exists?('/var/lib/apt/periodic/update-success-stamp') &&
+    File.mtime('/var/lib/apt/periodic/update-success-stamp') < Time.now - 86400
+  end
+end
+```
+_.kitchen.yml_を編集する
+_myapp/cookbooks/mycookbook/.kitchen.yml_
+```yml
+---
+driver:
+  name: vagrant
+  customize:
+    natdnshostresolver1: "on"
+
+provisioner:
+  name: chef_solo
+
+platforms:
+  - name: ubuntu-12.04
+  - name: centos-6.4
+
+suites:
+  - name: default
+    run_list:
+      - recipe[mycookbook::default]
+      - nginx
+      - mysql::client
+      - mysql::server
+    attributes:
+```
+### テスト用バーチャルマシンを作る
+```bash
+$ kitchen list
+Instance             Driver   Provisioner  Last Action
+default-ubuntu-1204  Vagrant  ChefSolo     <Not Created>
+default-centos-64    Vagrant  ChefSolo     <Not Created>
+$ kitchen create default-ubuntu-1204
+Instance             Driver   Provisioner  Last Action
+default-ubuntu-1204  Vagrant  ChefSolo     Created
+```
+### テスト用レシピを書く
+以下を追加  
+_myapp/cookbooks/mycookbook/recipes/default.rb_
+```ruby
+package "git"
+
+log "Well, that was too easy"
+```
+### Kitchen Convergeを実行する
+```bash
+$ kitchen converge default-ubuntu-1204
+・・・
+$ kitchen list
+Instance             Driver   Provisioner  Last Action
+default-ubuntu-1204  Vagrant  ChefSolo     Converged
+```
+convergeが失敗した場合は再実行してうまくいくまで繰り返す。
+
+### 手動確認
+```bash
+$ kitchen login default-centos-64
+Welcome to Ubuntu 12.04.4 LTS (GNU/Linux 3.11.0-15-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+Last login: Thu May 29 02:29:24 2014 from 10.0.2.2
+vagrant@default-ubuntu-1204:~$ exit
+logout
+Connection to 127.0.0.1 closed.
+MacBook-Air@k2works:mycookbook (wip) $ kitchen login default-ubuntu-1204
+Welcome to Ubuntu 12.04.4 LTS (GNU/Linux 3.11.0-15-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+Last login: Thu May 29 02:48:30 2014 from 10.0.2.2
+vagrant@default-ubuntu-1204:~$ which git
+/usr/bin/git
+vagrant@default-ubuntu-1204:~$ which mysql
+/usr/bin/mysql
+vagrant@default-ubuntu-1204:~$ which nginx
+/usr/sbin/nginx
+```
+
 ## <a name="4">ChefSpec</a>
 ## <a name="5">Foodcritic</a>
 
