@@ -9,13 +9,25 @@ provisioner:
 
 platforms:
   - name: ubuntu-12.04
+  - name: ubuntu-10.04
   - name: centos-6.4
 
 suites:
   - name: default
     run_list:
       - recipe[mycookbook::default]
+      - apt
+      - yum
       - nginx
       - mysql::client
       - mysql::server
     attributes:
+  - name: server
+    run_list:
+      - recipe[mycookbook::server]
+      - apt
+      - yum
+      - runit
+    attributes:
+    excludes:
+      - centos-6.4

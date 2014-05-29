@@ -12,15 +12,18 @@ bash 'bootstrap' do
   EOC
 end
 
-execute "apt-get-update-periodic" do
-  command "apt-get update"
-  ignore_failure true
-  only_if do
-    File.exists?('/var/lib/apt/periodic/update-success-stamp') &&
-    File.mtime('/var/lib/apt/periodic/update-success-stamp') < Time.now - 86400
+execute "update-pkg" do
+  if node['platform'] == "ubuntu"
+    command "apt-get update -y"
+  else
+    command "yum update -y"
   end
 end
 
-package "git"
+if node['platform'] == "ubuntu" && node['platform_version'].to_f <= 10.04
+  package "git-core"
+else
+  package "git"
+end
 
 log "Well, that was too easy"

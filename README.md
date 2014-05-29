@@ -274,12 +274,11 @@ bash 'bootstrap' do
   EOC
 end
 
-execute "apt-get-update-periodic" do
-  command "apt-get update"
-  ignore_failure true
-  only_if do
-    File.exists?('/var/lib/apt/periodic/update-success-stamp') &&
-    File.mtime('/var/lib/apt/periodic/update-success-stamp') < Time.now - 86400
+execute "update-pkg" do
+  if node['platform'] == "ubuntu"
+    command "apt-get update"
+  else
+    command "yum update -y"
   end
 end
 ```
@@ -357,6 +356,262 @@ vagrant@default-ubuntu-1204:~$ which mysql
 /usr/bin/mysql
 vagrant@default-ubuntu-1204:~$ which nginx
 /usr/sbin/nginx
+```
+### テストを書く
+_myapp/cookbooks/mycookbook/test/integration/default/bats/git_installed.bats_
+```bash
+#!/usr/bin/env bats
+
+@test "git binary is found in PATH" {
+  run which git
+  [ "$status" -eq 0 ]
+}
+```
+### Kitchen Verifyを実行する
+```bash
+$ kitchen verify default-ubuntu-1204
+-----> Starting Kitchen (v1.2.2.dev)
+-----> Setting up <default-ubuntu-1204>...
+Fetching: thor-0.19.0.gem (100%)
+Fetching: busser-0.6.2.gem (100%)
+Successfully installed thor-0.19.0
+Successfully installed busser-0.6.2
+2 gems installed
+-----> Setting up Busser
+       Creating BUSSER_ROOT in /tmp/busser
+       Creating busser binstub
+       Plugin bats installed (version 0.2.0)
+-----> Running postinstall for bats plugin
+Installed Bats to /tmp/busser/vendor/bats/bin/bats
+       Finished setting up <default-ubuntu-1204> (0m58.64s).
+-----> Verifying <default-ubuntu-1204>...
+       Suite path directory /tmp/busser/suites does not exist, skipping.
+Uploading /tmp/busser/suites/bats/git_installed.bats (mode=0644)
+-----> Running bats test suite
+ ✓ git binary is found in PATH
+
+1 test, 0 failures
+       Finished verifying <default-ubuntu-1204> (0m1.08s).
+-----> Kitchen is finished. (1m0.44s)
+```
+テストを失敗させる
+_myapp/cookbooks/mycookbook/test/integration/default/bats/git_installed.bats_
+```bash
+#!/usr/bin/env bats
+
+@test "git binary is found in PATH" {
+  run which gitt
+  [ "$status" -eq 0 ]
+}
+```
+```bash
+$ kitchen verify default-ubuntu-1204
+-----> Starting Kitchen (v1.2.2.dev)
+-----> Verifying <default-ubuntu-1204>...
+       Removing /tmp/busser/suites/bats
+Uploading /tmp/busser/suites/bats/git_installed.bats (mode=0644)
+-----> Running bats test suite
+ ✗ git binary is found in PATH
+   (in test file /tmp/busser/suites/bats/git_installed.bats, line 5)
+
+1 test, 1 failure
+Command [/tmp/busser/vendor/bats/bin/bats /tmp/busser/suites/bats] exit code was 1
+>>>>>> Verify failed on instance <default-ubuntu-1204>.
+>>>>>> Please see .kitchen/logs/default-ubuntu-1204.log for more details
+>>>>>> ------Exception-------
+>>>>>> Class: Kitchen::ActionFailed
+>>>>>> Message: SSH exited (1) for command: [sh -c 'BUSSER_ROOT="/tmp/busser" GEM_HOME="/tmp/busser/gems" GEM_PATH="/tmp/busser/gems" GEM_CACHE="/tmp/busser/gems/cache" ; export BUSSER_ROOT GEM_HOME GEM_PATH GEM_CACHE; sudo -E /tmp/busser/bin/busser test']
+>>>>>> ----------------------
+```
+テストを追加
+```bash
+#!/usr/bin/env bats
+
+@test "git binary is found in PATH" {
+  run which git
+  [ "$status" -eq 0 ]
+}
+
+@test "mysql binary is found in PATH" {
+  run which mysql
+  [ "$status" -eq 0 ]
+}
+
+@test "nginx binary is found in PATH" {
+  run which nginx
+  [ "$status" -eq 0 ]
+}
+
+```
+実行
+```bash
+$ kitchen verify default-ubuntu-1204
+-----> Starting Kitchen (v1.2.2.dev)
+-----> Verifying <default-ubuntu-1204>...
+       Removing /tmp/busser/suites/bats
+Uploading /tmp/busser/suites/bats/git_installed.bats (mode=0644)
+-----> Running bats test suite
+ ✓ git binary is found in PATH
+ ✓ mysql binary is found in PATH
+ ✓ nginx binary is found in PATH
+
+3 tests, 0 failures
+       Finished verifying <default-ubuntu-1204> (0m1.13s).
+-----> Kitchen is finished. (0m1.86s)
+```
+### Kitchen Testを実行する
+[うまくいかない](https://github.com/k2works/Chef-DK_introduction/issues/1)
+
+### プラットフォーム追加
+_.kitchen.yml_
+```yml
+・・・
+platforms:
+  - name: ubuntu-12.04
+  - name: ubuntu-10.04
+  - name: centos-6.4
+・・・  
+```
+### Convergeを直す
+_.kitchen.yml_
+```yml
+・・・
+platforms:
+  - name: ubuntu-12.04
+  - name: ubuntu-10.04
+  - name: centos-6.4
+・・・  
+```
+
+```bash
+$ kitchen converge 10
+-----> Starting Kitchen (v1.2.2.dev)
+-----> Converging <default-ubuntu-1004>...
+...
+
+       ================================================================================
+       Error executing action `install` on resource 'package[git]'
+       ================================================================================
+
+
+       Chef::Exceptions::Package
+       -------------------------
+       git has no candidate in the apt-cache
+...
+```
+_myapp/cookbooks/mycookbook/recipes/default.rb_
+```bash
+if node['platform'] == "ubuntu" && node['platform_version'].to_f <= 10.04
+  package "git-core"
+else
+  package "git"
+end
+
+log "Well, that was too easy"
+```
+```bash
+$ kitchen verify 10
+$ kitchen verify ('12|64')
+$ kitchen destroy
+```
+### 新機能を追加する
+_.kitchen.yml_
+```yml
+・・・
+- name: server
+  run_list:
+    - recipe[mycookbook::server]
+  attributes:  
+```
+### サーバーテストを追加する
+_myapp/cookbooks/mycookbook/test/integration/server/serverspec/git_daemon_spec.rb_
+```ruby
+require 'serverspec'
+
+include Serverspec::Helper::Exec
+include Serverspec::Helper::DetectOS
+
+RSpec.configure do |c|
+  c.before :all do
+    c.path = '/sbin:/usr/sbin'
+  end
+end
+
+describe "Git Daemon" do
+
+  it "is listening on port 9418" do
+    expect(port(9418)).to be_listening
+  end
+
+  it "has a running service of git-daemon" do
+    expect(service("git-daemon")).to be_running
+  end
+
+end
+```
+テスト実行
+```bash
+$ kitchen verify server-ubuntu-1204
+```
+レシピが無くて失敗するのでレシピ追加
+_myapp/cookbooks/mycookbook/recipes/server.rb_
+```ruby
+include_recipe "mycookbook"
+
+package "git-daemon-run"
+
+runit_service "git-daemon" do
+  sv_templates false
+end
+```
+### 依存関係追加
+_Berksfile_
+```ruby
+cookbook "runit"
+```
+実行
+```bash
+$ kitchen verify server-ubuntu-1204
+-----> Starting Kitchen (v1.2.2.dev)
+-----> Verifying <server-ubuntu-1204>...
+       Removing /tmp/busser/suites/serverspec
+Uploading /tmp/busser/suites/serverspec/git_daemon_spec.rb (mode=0644)
+-----> Running serverspec test suite
+/opt/chef/embedded/bin/ruby -I/tmp/busser/suites/serverspec -S /opt/chef/embedded/bin/rspec /tmp/busser/suites/serverspec/git_daemon_spec.rb --color --format documentation
+
+Git Daemon
+  is listening on port 9418
+  has a running service of git-daemon
+
+Finished in 0.08699 seconds
+2 examples, 0 failures
+       Finished verifying <server-ubuntu-1204> (0m1.47s).
+-----> Kitchen is finished. (0m2.47s)
+```
+CentOSでも実行できるようにする
+```ruby
+include_recipe "mycookbook"
+
+
+if node['platform'] == "ubuntu"
+  package "git-daemon-run"
+else
+  package "git-daemon"
+end
+
+runit_service "git-daemon" do
+  sv_templates false
+end
+```
+CentOSはサーバーグループから除外する場合
+```yml
+・・・
+excludes:
+  - centos-6.4
+```
+後かたづけ
+```bash
+$ kitchen destroy
 ```
 
 ## <a name="4">ChefSpec</a>

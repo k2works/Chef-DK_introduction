@@ -4,6 +4,7 @@ DEPENDENCIES
     metadata: true
   mysql
   nginx (~> 2.6)
+  runit
 
 GRAPH
   apt (2.4.0)

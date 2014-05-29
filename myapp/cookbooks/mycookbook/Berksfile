@@ -4,3 +4,4 @@ metadata
 
 cookbook "mysql"
 cookbook "nginx", "~> 2.6"
+cookbook "runit"
