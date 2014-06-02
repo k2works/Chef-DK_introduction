@@ -615,7 +615,122 @@ $ kitchen destroy
 ```
 
 ## <a name="4">ChefSpec</a>
+ChefSpecは仮想マシンを実行しなくてもテストが実行できる。
+
+### Specファイルの準備
+以下のファイルを追加する
+```bash
+├── spec
+│   ├── recipes
+│   └── spec_helper.rb
+```
+_myapp/cookbooks/mycookbook/spec/recipes/default_spec.rb_
+```ruby
+require_relative '../spec_helper'
+
+describe 'mycookbook::default' do
+  subject { ChefSpec::Runner.new.converge(described_recipe) }
+
+  # Write quick specs using `it` blocks with implied subjects
+  it { should do_something('...') }
+
+  # Write full examples using the `expect` syntax
+  it 'does something' do
+    expect(subject).to do_something('...')
+  end
+
+  # Use an explicit subject
+  let(:chef_run) { ChefSpec::Runner.new.converge(described_recipe) }
+
+  it 'does something' do
+    expect(chef_run).to do_something('...')
+  end
+end
+```
+_myapp/cookbooks/mycookbook/spec/spec_helper.rb_
+```ruby
+# Added by ChefSpec
+require 'chefspec'
+
+# Uncomment to use ChefSpec's Berkshelf extension
+# require 'chefspec/berkshelf'
+
+RSpec.configure do |config|
+  # Specify the path for Chef Solo to find cookbooks
+  # config.cookbook_path = '/var/cookbooks'
+
+  # Specify the path for Chef Solo to find roles
+  # config.role_path = '/var/roles'
+
+  # Specify the Chef log_level (default: :warn)
+  # config.log_level = :debug
+
+  # Specify the path to a local JSON file with Ohai data
+  # config.path = 'ohai.json'
+
+  # Specify the operating platform to mock Ohai data from
+  # config.platform = 'ubuntu'
+
+  # Specify the operating version to mock Ohai data from
+  # config.version = '12.04'
+end
+```
+出力結果に色を付ける
+_.rspec_
+```
+--colour
+--format documentation
+```
+テスト実行
+```bash
+$ pwd
+/Users/k2works/github/Chef-DK_introduction/myapp/cookbooks/mycookbook
+$ rspec
+
+mycookbook::default
+  example at ./spec/recipes/default_spec.rb:7 (FAILED - 1)
+  does something (FAILED - 2)
+  does something (FAILED - 3)
+
+Failures:
+
+  1) mycookbook::default
+     Failure/Error: it { should do_something('...') }
+     NoMethodError:
+       undefined method `do_something' for #<RSpec::Core::ExampleGroup::Nested_1:0x00000105a1f0a8>
+     # ./spec/recipes/default_spec.rb:7:in `block (2 levels) in <top (required)>'
+
+  2) mycookbook::default does something
+     Failure/Error: expect(subject).to do_something('...')
+     NoMethodError:
+       undefined method `do_something' for #<RSpec::Core::ExampleGroup::Nested_1:0x00000105a1d8c0>
+     # ./spec/recipes/default_spec.rb:11:in `block (2 levels) in <top (required)>'
+
+  3) mycookbook::default does something
+     Failure/Error: expect(chef_run).to do_something('...')
+     NoMethodError:
+       undefined method `do_something' for #<RSpec::Core::ExampleGroup::Nested_1:0x00000105a5d3a8>
+     # ./spec/recipes/default_spec.rb:18:in `block (2 levels) in <top (required)>'
+
+Finished in 0.01287 seconds
+3 examples, 3 failures
+
+Failed examples:
+
+rspec ./spec/recipes/default_spec.rb:7 # mycookbook::default
+rspec ./spec/recipes/default_spec.rb:10 # mycookbook::default does something
+rspec ./spec/recipes/default_spec.rb:17 # mycookbook::default does something
+```
+必要なテストを作成していく
 ## <a name="5">Foodcritic</a>
+カバレッジを実行した時に発生するであるクックブックの問題を簡単に指摘してくれる。これは最も迅速なフィードバック。もしチェックを自動実行すれば共通の問題を解決する時間を節約できる。  
+```bash
+$ foodcritic mycookbook/
+FC011: Missing README in markdown format: mycookbook/README.md:1
+FC011: Missing README in markdown format: mycookbook/spec/README.md:1
+FC031: Cookbook without metadata file: mycookbook/spec/metadata.rb:1
+FC045: Consider setting cookbook name in metadata: mycookbook/spec/metadata.rb:1
+```
 
 # 参照
 + [Chef](http://www.getchef.com)
