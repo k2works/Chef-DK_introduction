@@ -723,7 +723,14 @@ rspec ./spec/recipes/default_spec.rb:17 # mycookbook::default does something
 ```
 必要なテストを作成していく
 ## <a name="5">Foodcritic</a>
-
+カバレッジを実行した時に発生するであるクックブックの問題を簡単に指摘してくれる。これは最も迅速なフィードバック。もしチェックを自動実行すれば共通の問題を解決する時間を節約できる。  
+```bash
+$ foodcritic mycookbook/
+FC011: Missing README in markdown format: mycookbook/README.md:1
+FC011: Missing README in markdown format: mycookbook/spec/README.md:1
+FC031: Cookbook without metadata file: mycookbook/spec/metadata.rb:1
+FC045: Consider setting cookbook name in metadata: mycookbook/spec/metadata.rb:1
+```
 
 # 参照
 + [Chef](http://www.getchef.com)
